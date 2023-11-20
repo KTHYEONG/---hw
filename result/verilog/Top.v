@@ -28,8 +28,17 @@ begin
     #10 nRST = 1;
 end
 
-// image입력
-integer i;
+// image입력(값 제대로 읽어들이는지 확인)
+initial
+begin
+    $readmemb("image.mem", IMGIN);
+    $display("Image data:");
+    for (int i = 0; i < 200; i = i + 1)
+        $write("%b ", IMGIN[i]);
+    $write("\n");
+end
+
+/*integer i;
 initial
 begin
     for (i = 0; i < 200; i = i + 1)
@@ -37,7 +46,7 @@ begin
         $write("%b ", IMGIN[i]);
     end
     $write("\n");
-end
+end*/
 
 
 // label입력
