@@ -31,10 +31,10 @@ end
 // image입력(값 제대로 읽어들이는지 확인)
 initial
 begin
-    $readmemb("image.mem", IMGIN);
+    $readmemh("image.mem", IMGIN);
     $display("Image data:");
     for (int i = 0; i < 200; i = i + 1)
-        $write("%b ", IMGIN[i]);
+        $write("%h ", IMGIN[i]);
     $write("\n");
 end
 
