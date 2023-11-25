@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 1ps // START 여러번 1이되는 경우
 
 module Top();
 
@@ -57,37 +57,35 @@ end
 always@(*)
 begin
     if (START) begin
-        #10 START = 0;
+        #10 START <= 0;
         
-        while (img_idx < 100) begin
-            // x, y 에서 시작 --> 5 x 5 크기만큼 IMGIN에 저장
-            for (i = 0; i < 5; i = i + 1) begin
-                for (j = 0; j < 5; j = j + 1) begin
-                    IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
-                    //$display("i: %d, j: %d, img_idx: %d, IMG_MN: %h", i, j, img_idx, MNIST_image[img_idx][(X + i) * 28 + (Y + j)]);
-                end
-            end
-            
-            $display("X: %d, Y: %d, idx: %d, IMG: %h", X, Y, img_idx, IMGIN);
-
-            #10 Y = Y + 1;
-            if (Y == 24) begin
-                Y = 0;
-                X = X + 1;
-            end
-            if (X == 24) begin
-                X = 0;
-                Y = 0;
-                img_idx = img_idx + 1;
+        // x, y 에서 시작 --> 5 x 5 크기만큼 IMGIN에 저장
+        for (i = 0; i < 5; i = i + 1) begin
+            for (j = 0; j < 5; j = j + 1) begin
+                IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
+                //$display("i: %d, j: %d, img_idx: %d, IMG_MN: %h", i, j, img_idx, MNIST_image[img_idx][(X + i) * 28 + (Y + j)]);
             end
         end
+        
+        $display("X: %d, Y: %d, idx: %d, IMG: %h", X, Y, img_idx, IMGIN);
 
-        /*if (img_idx < 100) begin
+        Y = Y + 1;
+        if (Y == 24) begin
+            Y = 0;
+            X = X + 1;
+        end
+        if (X == 24) begin
+            X = 0;
+            Y = 0;
+            img_idx = img_idx + 1;
+        end
+
+        if (img_idx < 100) begin
             #10 START <= 1;
         end
         else begin
             #10 START <= 0;
-        end*/
+        end
     end
 end
 
