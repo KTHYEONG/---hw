@@ -60,7 +60,8 @@ always@(posedge START)
 begin
     if (START) begin
         START <= 0;
-
+        
+        // x, y 에서 시작 --> 5 x 5 크기만큼 IMGIN에 저장
         if (k != 0)
             k = k - 24;
         for (i = 0; i < 5; i = i + 1) begin
@@ -77,6 +78,7 @@ begin
         if (Y == 24) begin
             Y = 0;
             X = X + 1;
+            k = k + 50;
         end
         if (X == 24) begin
             X = 0;
@@ -85,6 +87,7 @@ begin
             k = 0;
         end
 
+        //100
         if (img_idx < 1) begin
             START <= 1;
         end
