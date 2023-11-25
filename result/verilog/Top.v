@@ -9,7 +9,7 @@ reg[199:0] IMGIN;
 wire DONE;
 wire[3:0] OUT;
 
-simpleCNN sCNN(.CLK(CLK), .nRST(nRST), .START(START), .X(X), .Y(Y), .IMGIN(IMGIN), .DONE(DONE), .OUT(OUT));
+//simpleCNN sCNN(.CLK(CLK), .nRST(nRST), .START(START), .X(X), .Y(Y), .IMGIN(IMGIN), .DONE(DONE), .OUT(OUT));
 
 always
     #5 CLK = ~CLK;
@@ -18,7 +18,6 @@ initial
 begin
     CLK = 0; X = 0; Y = 0;
     #30 START = 1;
-    #10 START = 0;
 end
     
 initial
@@ -28,35 +27,76 @@ begin
 end
 
 // image 입력
-integer fd;
-always@(START)
+reg [7:0] MNIST_image[99:0][783:0];
+reg[7:0] pixel;
+integer fd, i, j;
+integer img_idx;
+initial
 begin
-    if (START == 1)
-    begin
-        fd = $fopen("image.mem", "r");
-        if (fd == 0)
-        begin
-            $display("Error: file cannot opend");
-            $finish();
+    fd = $fopen("image.mem", "r");
+    if (fd == 0) begin
+        $display("Error: file cannot be opened");
+        $finish();
+    end
+    
+    // 100개의 MNIST 데이터 읽어들이기
+    img_idx = 0;
+    while (img_idx < 100) begin
+        for (i = 0; i < 784; i = i + 1) begin
+            $fscanf(fd, "%2h", pixel);
+            MNIST_image[img_idx][i] = pixel;
+            //$display("idx: %d, i: %d, image: %h", img_idx, i, MNIST_image[img_idx][i]);
         end
-        
-        while(!($feof(fd))) begin
-            #10 $fscanf(fd, "%50h", IMGIN);
-            $display("image: %h", IMGIN);
-            Y = Y + 1;
-            if (Y == 29)
-            begin
-                X = X + 1;
-                Y = 0;
+        img_idx = img_idx + 1;
+    end
+    img_idx = 0;
+    $fclose(fd);
+end
+
+// IMGIN에 5x5 크기의 데이터 저장
+integer k;
+initial k = 0;
+always@(posedge START)
+begin
+    if (START) begin
+        START <= 0;
+
+        if (k != 0)
+            k = k - 24;
+        for (i = 0; i < 5; i = i + 1) begin
+            for (j = 0; j < 5; j = j + 1) begin
+                IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][k];
+                //$display("i: %d, j: %d, img_idx: %d, k: %d, IMG_MN: %h", i, j, img_idx, k, IMGIN[(i * 5 + j) * 8 +: 8]);
+                k = k + 1;
             end
         end
-        $fclose(fd);
+        
+        $display("X: %d, Y: %d, IMG: %h", X, Y, IMGIN);
+
+        Y = Y + 1;
+        if (Y == 24) begin
+            Y = 0;
+            X = X + 1;
+        end
+        if (X == 24) begin
+            X = 0;
+            Y = 0;
+            img_idx = img_idx + 1;
+            k = 0;
+        end
+
+        if (img_idx < 1) begin
+            START <= 1;
+        end
+        else begin
+            START <= 0;
+        end
     end
 end
 
 // label 입력
 reg[3:0] label[99:0];
-integer fr, i;
+integer fr;
 initial
 begin
     i = 0;
@@ -66,27 +106,33 @@ begin
         $fscanf(fr, "%d", label[i]);
         i = i + 1;
     end
-    i = 0;
     $fclose(fr);
 end
 
 // 정확도 체크
-integer err;
-initial err = 0;
+integer err, label_idx;
+initial
+begin
+    err = 0;
+    label_idx = 0;
+end
+
 always @(DONE)
 begin
     if (DONE == 1)
     begin
-        if (label[i] != OUT)
+        if (label[label_idx] != OUT)
             err = err + 1;
-        i = i + 1;
+        label_idx = label_idx + 1;
     end
 end
 
 initial
 begin
-    //#2000 $display("Accuracy: %d%%\n", (100 - err) / 100 * 100); 
-    #3000 $finish;
+    if (label_idx == 577) begin
+        $display("Accuracy: %d%%\n", (100 - err) / 100 * 100); 
+        $finish;
+    end    
 end
 
 endmodule
