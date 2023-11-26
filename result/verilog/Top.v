@@ -9,7 +9,7 @@ reg[199:0] IMGIN;
 wire DONE;
 wire[3:0] OUT;
 
-//simpleCNN sCNN(.CLK(CLK), .nRST(nRST), .START(START), .X(X), .Y(Y), .IMGIN(IMGIN), .DONE(DONE), .OUT(OUT));
+simpleCNN sCNN(.CLK(CLK), .nRST(nRST), .START(START), .X(X), .Y(Y), .IMGIN(IMGIN), .DONE(DONE), .OUT(OUT));
 
 always
     #5 CLK = ~CLK;
@@ -59,7 +59,7 @@ begin
     if (START) begin
         #10 START = 0;
         
-        while (img_idx < 100) begin
+        while (img_idx < 1) begin
             // x, y 에서 시작 --> 5 x 5 크기만큼 IMGIN에 저장
             for (i = 0; i < 5; i = i + 1) begin
                 for (j = 0; j < 5; j = j + 1) begin
@@ -68,7 +68,7 @@ begin
                 end
             end
             
-            $display("X: %d, Y: %d, idx: %d, IMG: %h", X, Y, img_idx, IMGIN);
+            //$display("X: %d, Y: %d, idx: %d, IMG: %h", X, Y, img_idx, IMGIN);
 
             #10 Y = Y + 1;
             if (Y == 24) begin
@@ -81,13 +81,6 @@ begin
                 img_idx = img_idx + 1;
             end
         end
-
-        /*if (img_idx < 100) begin
-            #10 START <= 1;
-        end
-        else begin
-            #10 START <= 0;
-        end*/
     end
 end
 
@@ -120,6 +113,7 @@ begin
     begin
         if (label[label_idx] != OUT)
             err = err + 1;
+        $display("%d / %d", OUT, label[label_idx]);
         label_idx = label_idx + 1;
     end
 end
