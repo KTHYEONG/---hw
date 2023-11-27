@@ -28,12 +28,13 @@ reg[1:0] state;
 parameter IDLE = 2'b00, CONVOLUTION = 2'b01, FULLY_CONNECTED = 2'b10;
 
 // CONVOLUTION에서 사용하는 변수
-reg[7:0] sum;
-reg[7:0] conv_res[575:0];
+reg[15:0] conv_res[575:0];
+reg[15:0] mul_res;
+reg[15:0] sum;
 integer conv_cnt;
 
 // FC에서 사용하는 변수
-reg[7:0] fc_res[9:0];
+reg[23:0] fc_res[9:0];
 integer ans_idx;
 
 integer i, j;
@@ -48,26 +49,31 @@ begin
         case (state)
             IDLE: begin
                 if (START) begin
-                    state <= CONVOLUTION;
                     conv_cnt <= 0;
+                    DONE <= 0;
+                    state <= CONVOLUTION;
                 end
             end
             
             CONVOLUTION: begin
-                sum <= 0;
+                sum = 0;
                 for (i = 0; i < 5; i = i + 1) begin
                     for (j = 0; j < 5; j = j + 1) begin
-                        sum <= sum + conv_kernel(i, j) * IMGIN[(i * 5 + j) * 8 +: 8];
+                        mul_res = conv_kernel(i, j) * IMGIN[(i * 5 + j) * 8 +: 8];
+                        sum = sum + mul_res;
+                        //$display("%d sum: %h, mul_res: %h", conv_cnt, sum, mul_res);
                     end
                 end
-                conv_res[conv_cnt] <= sum;
-
+                
                 // relu
-                if (conv_res[conv_cnt] < 0)
+                if (sum < 0)
                     conv_res[conv_cnt] <= 0;
+                conv_res[conv_cnt] = sum;
+                
+                //$display("%d, sum: %d, conv_res: %d", conv_cnt, sum, conv_res[conv_cnt]);
                 
                 conv_cnt <= conv_cnt + 1;
-                if (conv_cnt > 576)
+                if (conv_cnt > 575)
                     state <= FULLY_CONNECTED;
             end
 
@@ -75,19 +81,23 @@ begin
                 for (i = 0; i < 10; i = i + 1) begin
                     fc_res[i] = 0;
                     for (j = 0; j < 576; j = j + 1) begin
-                        fc_res[i] <= fc_res[i] + fc_kernel(i, j) * conv_res[(i / 24) + (j % 24)];
+                        fc_res[i] = fc_res[i] + fc_kernel(i, j) * conv_res[j];
+                        //$display("fc_res: %h, fc_kernel: %h, conv_res: %h", fc_res[i], fc_kernel(i, j), conv_res[j]);
                     end
                 end
                 
                 // 결과 찾기
-                ans_idx <= 0;
+                ans_idx = 0;
                 for (i = 1; i < 10; i = i + 1) begin
+                    //$display("fc_resI: %h, fc_resA: %h, ans_idx: %d", fc_res[i], fc_res[ans_idx], ans_idx);
                     if (fc_res[i] > fc_res[ans_idx])
-                        ans_idx = i;
+                        ans_idx <= i;
                 end
 
+                // 1이미지만 실행되는 이유 찾기
                 OUT <= ans_idx;
                 DONE <= 1;
+                $display("%d", DONE);
                 state <= IDLE;
             end
         endcase

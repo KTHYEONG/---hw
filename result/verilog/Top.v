@@ -59,7 +59,7 @@ begin
     if (START) begin
         #10 START = 0;
         
-        while (img_idx < 1) begin
+        while (img_idx < 100) begin
             // x, y 에서 시작 --> 5 x 5 크기만큼 IMGIN에 저장
             for (i = 0; i < 5; i = i + 1) begin
                 for (j = 0; j < 5; j = j + 1) begin
@@ -113,14 +113,14 @@ begin
     begin
         if (label[label_idx] != OUT)
             err = err + 1;
-        $display("%d / %d", OUT, label[label_idx]);
+        //$display("%d / %d", OUT, label[label_idx]);
         label_idx = label_idx + 1;
     end
 end
 
 initial
 begin
-    if (label_idx == 577) begin
+    if (label_idx == 100) begin
         $display("Accuracy: %d%%\n", (100 - err) / 100 * 100); 
         $finish;
     end    
