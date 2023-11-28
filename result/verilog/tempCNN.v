@@ -39,7 +39,7 @@ module simpleCNN (
     integer ans_idx;
 
     integer i, j;
-    always @(posedge CLK or negedge nRST or X or Y)
+    always @(posedge CLK or negedge nRST)
     begin
         if (!nRST) begin
             conv_cnt <= 0;

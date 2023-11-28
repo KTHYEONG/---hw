@@ -21,6 +21,7 @@ begin
     Y = 0;
 end
     
+
 initial
 begin
     nRST = 0; START = 0;
@@ -29,10 +30,11 @@ begin
     repeat(99) #5800 START = ~START;
 end
 
+
 // image 입력
 reg [7:0] MNIST_image[99:0][783:0];
 reg[7:0] pixel;
-integer fd, i, j;
+integer fd, i;
 integer img_idx;
 initial
 begin
@@ -70,46 +72,69 @@ begin
     $fclose(fr);
 end
 
+
 // IMGIN 200bit 입력받을 때마다 simpleCNN 실행되도록 수정하기
 // IMGIN에 5x5 크기의 데이터 저장
-always@(posedge START)
+integer k, l, img_cnt, xy_cnt;
+initial
+begin
+    k = 0;
+    l = 0;
+    img_cnt = 0;
+    xy_cnt = 0;
+end
+
+initial
+    $monitor("img_cnt: %d, IMGIN: %h, MNIST: %h", img_cnt, IMGIN, MNIST_image[img_idx][(X + k) * 28 + (Y + l)]);
+
+always@(posedge CLK)
 begin
     if (START) begin
         #10 START <= 0;
     
-        IMGIN[(0 * 5 + 0) * 8 +: 8] <= MNIST_image[img_idx][(X + 0) * 28 + (Y + 0)];
-        IMGIN[(0 * 5 + 1) * 8 +: 8] <= MNIST_image[img_idx][(X + 0) * 28 + (Y + 1)];
-        IMGIN[(0 * 5 + 2) * 8 +: 8] <= MNIST_image[img_idx][(X + 0) * 28 + (Y + 2)];
-        IMGIN[(0 * 5 + 3) * 8 +: 8] <= MNIST_image[img_idx][(X + 0) * 28 + (Y + 3)];
-        IMGIN[(0 * 5 + 4) * 8 +: 8] <= MNIST_image[img_idx][(X + 0) * 28 + (Y + 4)];
+        IMGIN[(k * 5 + l) * 8 +: 8] <= MNIST_image[img_idx][(X + k) * 28 + (Y + l)];
 
-        IMGIN[(1 * 5 + 0) * 8 +: 8] <= MNIST_image[img_idx][(X + 1) * 28 + (Y + 0)];
-        IMGIN[(1 * 5 + 1) * 8 +: 8] <= MNIST_image[img_idx][(X + 1) * 28 + (Y + 1)];
-        IMGIN[(1 * 5 + 2) * 8 +: 8] <= MNIST_image[img_idx][(X + 1) * 28 + (Y + 2)];
-        IMGIN[(1 * 5 + 3) * 8 +: 8] <= MNIST_image[img_idx][(X + 1) * 28 + (Y + 3)];
-        IMGIN[(1 * 5 + 4) * 8 +: 8] <= MNIST_image[img_idx][(X + 1) * 28 + (Y + 4)];
-        
-        IMGIN[(2 * 5 + 0) * 8 +: 8] <= MNIST_image[img_idx][(X + 2) * 28 + (Y + 0)];
-        IMGIN[(2 * 5 + 1) * 8 +: 8] <= MNIST_image[img_idx][(X + 2) * 28 + (Y + 1)];
-        IMGIN[(2 * 5 + 2) * 8 +: 8] <= MNIST_image[img_idx][(X + 2) * 28 + (Y + 2)];
-        IMGIN[(2 * 5 + 3) * 8 +: 8] <= MNIST_image[img_idx][(X + 2) * 28 + (Y + 3)];
-        IMGIN[(2 * 5 + 4) * 8 +: 8] <= MNIST_image[img_idx][(X + 2) * 28 + (Y + 4)];
+        if (l < 5) begin
+            l <= l + 1;
+        end
+        else begin
+            l <= 0;
+            if (k < 5) begin
+                k <= k + 1;
+            end
+            else begin
+                k <= 0;
+            end
+        end
 
-        IMGIN[(3 * 5 + 0) * 8 +: 8] <= MNIST_image[img_idx][(X + 3) * 28 + (Y + 0)];
-        IMGIN[(3 * 5 + 1) * 8 +: 8] <= MNIST_image[img_idx][(X + 3) * 28 + (Y + 1)];
-        IMGIN[(3 * 5 + 2) * 8 +: 8] <= MNIST_image[img_idx][(X + 3) * 28 + (Y + 2)];
-        IMGIN[(3 * 5 + 3) * 8 +: 8] <= MNIST_image[img_idx][(X + 3) * 28 + (Y + 3)];
-        IMGIN[(3 * 5 + 4) * 8 +: 8] <= MNIST_image[img_idx][(X + 3) * 28 + (Y + 4)];
+        img_cnt <= img_cnt + 1;
 
-        IMGIN[(4 * 5 + 0) * 8 +: 8] <= MNIST_image[img_idx][(X + 4) * 28 + (Y + 0)];
-        IMGIN[(4 * 5 + 1) * 8 +: 8] <= MNIST_image[img_idx][(X + 4) * 28 + (Y + 1)];
-        IMGIN[(4 * 5 + 2) * 8 +: 8] <= MNIST_image[img_idx][(X + 4) * 28 + (Y + 2)];
-        IMGIN[(4 * 5 + 3) * 8 +: 8] <= MNIST_image[img_idx][(X + 4) * 28 + (Y + 3)];
-        IMGIN[(4 * 5 + 4) * 8 +: 8] <= MNIST_image[img_idx][(X + 4) * 28 + (Y + 4)];
-        
-        img_idx <= img_idx + 1;
+        if (img_cnt == 25) begin
+            if (Y < 24) begin
+                Y <= Y + 1;
+            end
+            else begin
+                Y <= 0;
+                if (X < 24) begin
+                    X <= X + 1;
+                end
+                else begin
+                    X <= 0;
+                end
+            end
+
+            xy_cnt <= xy_cnt + 1;
+            img_cnt <= 0;
+        end
+
+        // 한 이미지 처리 끝
+        if (xy_cnt == 576) begin
+            img_idx <= img_idx + 1;
+            xy_cnt <= 0;
+        end
     end
 end
+
 
 // 정확도 체크
 integer err, label_idx;
@@ -129,12 +154,13 @@ begin
     end
 end
 
+
 // accuracy 계산 
 always@(label_idx)
 begin
     if (label_idx == 1) begin
         //$display("Accuracy: %.2f%%\n", (100.0 - err) / 100.0 * 100.0); 
-        $finish;
+        #1000 $finish;
     end    
 end
 
