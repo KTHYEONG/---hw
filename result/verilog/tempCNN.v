@@ -26,7 +26,7 @@ module simpleCNN (
     `include "kernel.vh"
 
     reg[1:0] state;
-    parameter IDLE = 2'b00, CONVOLUTION = 2'b01, FULLY_CONNECTED = 2'b10;
+    parameter IDLE = 2'b00, CONVOLUTION = 2'b01, RELU = 2'b10, FULLY_CONNECTED = 2'b11;
 
     // CONVOLUTION에서 사용하는 변수
     reg signed [15:0] conv_res[575:0];
@@ -39,7 +39,7 @@ module simpleCNN (
     integer ans_idx;
 
     integer i, j;
-    always @(posedge CLK or negedge nRST)
+    always @(posedge CLK or negedge nRST or X or Y)
     begin
         if (!nRST) begin
             conv_cnt <= 0;
@@ -53,33 +53,35 @@ module simpleCNN (
                     conv_cnt <= 0;
                     DONE <= 0;
                     OUT <= 0;
-                    if (START)
+                    if (START) begin
+                        sum <= 0;
                         state <= CONVOLUTION;
+                    end
                 end
                 
                 CONVOLUTION: begin
-                    sum = 0;
+                    $display("x: %d, y: %d", X, Y);
                     for (i = 0; i < 5; i = i + 1) begin
                         for (j = 0; j < 5; j = j + 1) begin
-                            mul_res = conv_kernel(i, j) * IMGIN[(i * 5 + j) * 8 +: 8];
-                            //mul_res = conv_kernel(i, j) * IMGIN[199 - (i * 5 + j) * 8 -: 8];
-                            sum = sum + mul_res;
-                            //$display("%d sum: %h, mul_res: %h", conv_cnt, sum, mul_res);
+                            sum <= sum + conv_kernel(i, j) * IMGIN[(i * 5 + j) * 8 +: 8];
+                            //$display("%d sum: %h, IMGIN: %h", conv_cnt, sum, IMGIN[(i * 5 + j) * 8 +: 8]);
                         end
                     end
-                    
-                    // relu
-                    if (sum < 0)
-                        conv_res[conv_cnt] = 0;
-                    else
-                        conv_res[conv_cnt] = sum;
-                    
+                    #1 conv_res[conv_cnt] <= sum;
+                    #1 state <= RELU;
+
                     //$display("conv_cnt: %d, conv_res/sum: %h/%h", conv_cnt, conv_res[conv_cnt], sum);
-                    
-                    if (conv_cnt < 576)
-                        conv_cnt <= conv_cnt + 1;
-                    else
-                        state <= FULLY_CONNECTED;
+                end
+
+                RELU: begin
+                    if (sum < 0)
+                        conv_res[conv_cnt] <= 0;
+
+                //$display("conv_res: %h", conv_res[conv_cnt]);
+
+                #1 conv_cnt <= conv_cnt + 1;
+                #1 state <= FULLY_CONNECTED;
+
                 end
 
                 FULLY_CONNECTED: begin

@@ -1,6 +1,5 @@
 `timescale 1ns / 1ps
 
-// MNIST 입력은 정상 -> 다음 단계 파악하기
 module Top();
 
 reg CLK, nRST, START;
@@ -64,7 +63,6 @@ begin
         // x, y 에서 시작 --> 5 x 5 크기만큼 IMGIN에 저장
         for (i = 0; i < 5; i = i + 1) begin
             for (j = 0; j < 5; j = j + 1) begin
-                //IMGIN[199 - (i * 5 + j) * 8 -: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
                 IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
                 //$display("i: %d, j: %d, MNIST: %h", i, j, MNIST_image[img_idx][(X + i) * 28 + (Y + j)]);
             end
@@ -112,7 +110,7 @@ begin
     begin
         if (label[label_idx] != OUT)
             err = err + 1;
-        //$display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
+        $display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
         label_idx = label_idx + 1;
     end
 end
@@ -120,7 +118,7 @@ end
 // accuracy 계산 
 always@(label_idx)
 begin
-    if (label_idx == 100) begin
+    if (label_idx == 5) begin
         $display("Accuracy: %.2f%%\n", (100.0 - err) / 100.0 * 100.0); 
         $finish;
     end    
