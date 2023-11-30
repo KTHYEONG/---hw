@@ -44,10 +44,9 @@ begin
             for (k = 0; k < 5; k = k + 1) begin
                 for (l = 0; l < 5; l = l + 1) begin
                     IMGIN[(k * 5 + l) * 8 +: 8] <= MNIST_image[img_idx][(X + k) * 28 + (Y + l)];
+                    //$display("IMGIN: %h", IMGIN[(k * 5 + l) * 8 +: 8]);
                 end
             end
-
-            //$display("IMGIN: %h", IMGIN);
 
             // X, Y 
             if (Y < 23)
