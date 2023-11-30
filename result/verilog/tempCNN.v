@@ -29,7 +29,7 @@ module simpleCNN (
             FULLY_CONNECTED = 2'b10, RESULT = 2'b11;
 
     // CONVOLUTION && RELU
-    reg signed [399:0] conv_res [23:0][23:0];
+    reg signed [399:0] conv_res[23:0][23:0];
     reg signed [399:0] conv_sum;
 
     // FC
@@ -50,33 +50,29 @@ module simpleCNN (
                 IDLE: begin
                     OUT <= 0;
                     DONE <= 0;
-                    if (START)
+                    if (START) begin
                         state <= CONVOLUTION;
+                    end
                 end
                 
                 CONVOLUTION: begin
                     // convolution && relu
-                    for (i = 0; i < 24; i = i + 1) begin
-                        for (j = 0; j < 24; j = j + 1) begin
-                            for (integer k = 0; k < 5; k = k + 1) begin
-                                for (integer l = 0; l < 5; l = l + 1) begin
-                                    if (conv_kernel(k, l) * IMGIN[(k * 5 + l) * 8 +: 8] < 0)
-                                        conv_sum[(k * 5 + l) * 16 +: 16] <= 0;
-                                    else
-                                        conv_sum[(k * 5 + l) * 16 +: 16] <= conv_kernel(k, l) * IMGIN[(k * 5 + l) * 8 +: 8];
-                                    $display("sum: %h", IMGIN[(k * 5 + l) * 8 +: 8]);
-                                end
-                            end
-                            conv_res[i][j] <= conv_sum;
+                    for (integer k = 0; k < 5; k = k + 1) begin
+                        for (integer l = 0; l < 5; l = l + 1) begin
+                            if (conv_kernel(k, l) * IMGIN[(k * 5 + l) * 8 +: 8] < 0)
+                                conv_sum[(k * 5 + l) * 16 +: 16] <= 0;
+                            else
+                                conv_sum[(k * 5 + l) * 16 +: 16] <= conv_kernel(k, l) * IMGIN[(k * 5 + l) * 8 +: 8];
                         end
                     end
 
-                    for (integer i = 0; i < 10; i = i + 1)
-                        fc_res[i] <= 0;
+                    conv_res[X][Y] <= conv_sum;
 
-                    state <= FULLY_CONNECTED;
+                    if (X > 23)
+                        state <= FULLY_CONNECTED;
                 end
 
+                // fc 수정하기
                 FULLY_CONNECTED: begin
                     for (integer i = 0; i < 10; i = i + 1) begin
                         for (integer j = 0; j < 24 * 24; j = j + 1) begin
