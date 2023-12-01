@@ -3,8 +3,8 @@
 module stimulus();
 
 reg CLK, nRST, START;
-reg[4:0] X, Y;
-reg[199:0] IMGIN;
+reg [4:0] X, Y;
+reg [199:0] IMGIN;
 
 wire DONE;
 wire[3:0] OUT;
@@ -19,16 +19,14 @@ begin
     CLK = 0; nRST = 0; START = 0;
     #20 nRST = 1;
     #10 START = 1;
-    repeat(99) #5800 START = ~START;
+    repeat(99) #5900 START = ~START;
 end
 
 // IMGIN 입력
-integer l, k, check;
+integer check;
 always@(posedge CLK)
 begin
     if (!nRST) begin
-        l <= 0;
-        k <= 0;
         check <= 0;
     end
     else begin
@@ -41,10 +39,9 @@ begin
         end
         if (check) begin
             // IMGIN
-            for (k = 0; k < 5; k = k + 1) begin
-                for (l = 0; l < 5; l = l + 1) begin
-                    IMGIN[(k * 5 + l) * 8 +: 8] <= MNIST_image[img_idx][(X + k) * 28 + (Y + l)];
-                    //$display("IMGIN: %h", IMGIN[(k * 5 + l) * 8 +: 8]);
+            for (integer i = 0; i < 5; i = i + 1) begin
+                for (integer j = 0; j < 5; j = j + 1) begin
+                    IMGIN[(i * 5 + j) * 8 +: 8] <= MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
                 end
             end
 
@@ -67,7 +64,7 @@ end
 
 // image 입력
 reg [7:0] MNIST_image[99:0][783:0];
-reg[7:0] pixel;
+reg [7:0] pixel;
 integer fd, i;
 integer img_idx;
 initial
@@ -92,7 +89,7 @@ begin
 end
 
 // label 입력
-reg[3:0] label[99:0];
+reg [3:0] label[99:0];
 integer fr;
 initial
 begin
@@ -119,7 +116,7 @@ begin
     begin
         if (label[label_idx] != OUT)
             err = err + 1;
-        $display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
+        //$display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
         label_idx = label_idx + 1;
     end
 end
@@ -128,7 +125,7 @@ end
 // accuracy 계산 
 always@(label_idx)
 begin
-    if (label_idx == 1) begin
+    if (label_idx == 100) begin
         $display("Accuracy: %.2f%%\n", (100.0 - err) / 100.0 * 100.0); 
         $finish;
     end    
