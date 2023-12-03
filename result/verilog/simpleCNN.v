@@ -94,7 +94,7 @@ begin
     for (i = 0; i < 5; i = i + 1) begin
         for (j = 0; j < 5; j = j + 1) begin
             sum = sum + conv_kernel(i, j) * conv_temp[i][j];
-            $display("X/Y %d/%d i/j: %d/%d  conv_temp: %d", X, Y, i, j, conv_temp[i][j]);
+            //$display("X/Y %d/%d i/j: %d/%d  conv_temp: %h", X, Y, i, j, conv_temp[i][j]);
         end
     end
     
