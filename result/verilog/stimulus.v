@@ -22,45 +22,49 @@ begin
     repeat(99) #5900 START = ~START;
 end
 
-// IMGIN 입력
-integer check;
-always@(posedge CLK)
+reg check;
+always@(posedge CLK or negedge nRST)
 begin
     if (!nRST) begin
-        check <= 0;
+        X <= 0;
+        Y <= 0;
     end
-    else begin
-        if (START) begin
-            X <= 0;
-            Y <= 0;
-            IMGIN <= 0;
-            #5 START <= 0;
-            #5 check <= 1;
-        end
-        if (check) begin
-            // IMGIN
-            for (integer i = 0; i < 5; i = i + 1) begin
-                for (integer j = 0; j < 5; j = j + 1) begin
-                    IMGIN[(i * 5 + j) * 8 +: 8] <= MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
-                end
-            end
+    else if (START) begin
+        #5 START <= 0;
+        check <= 1;
+    end
 
-            // X, Y 
-            if (Y < 23)
-                Y <= Y + 1;
+    if (check) begin
+        imgst;
+
+        // X, Y
+        if (Y < 23) begin
+            Y <= Y + 1;
+        end
+        else begin
+            Y <= 0;
+            if (X < 23) begin
+                X <= X + 1;
+            end
             else begin
-                Y <= 0;
-                if (X < 23)
-                    X <= X + 1;
-                else begin
-                    X <= 0;
-                    check <= 0;
-                    img_idx <= img_idx + 1;
-                end
+                X <= 0;
+                check <= 0;
+                img_idx <= img_idx + 1;
             end
         end
     end
 end
+
+task imgst();
+begin
+    for (integer i = 0; i < 5; i = i + 1) begin
+        for (integer j = 0; j < 5; j = j + 1) begin
+            IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
+            //$display("x/y %2d/%2d IMGIN: %h", X, Y, IMGIN[(i * 5 + j) * 8 +: 8]);
+        end
+    end
+end
+endtask
 
 // image 입력
 reg [7:0] MNIST_image[99:0][783:0];
@@ -125,7 +129,7 @@ end
 // accuracy 계산 
 always@(label_idx)
 begin
-    if (label_idx == 100) begin
+    if (label_idx == 2) begin
         $display("Accuracy: %.2f%%\n", (100.0 - err) / 100.0 * 100.0); 
         $finish;
     end    
