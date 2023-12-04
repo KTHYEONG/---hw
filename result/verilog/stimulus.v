@@ -23,21 +23,27 @@ begin
 end
 
 // IMGIN, x = 0, y = 0 --> 각 이미지마다 1번째 줄 데이터 읽어들이지 못하는 중
-reg check;
+reg check, first;
 always@(posedge CLK or negedge nRST)
 begin
     if (!nRST) begin
         X <= 0;
         Y <= 0;
+        first <= 1;
         check <= 0;
+        IMGIN <= 0;
     end
     else if (START) begin
-        #5 check <= 1;
-        START <= 0;
+        imgst(first);
+        first <= 0;
+        #5 START <= 0;
+        check <= 1;
+        #5 Y <= Y + 1;
     end
 
     if (check) begin
-        imgst();
+        imgst(first);
+
         // X, Y
         if (Y < 23) begin
             Y <= Y + 1;
@@ -56,13 +62,16 @@ begin
     end
 end
 
-task imgst();
+task imgst(input reg first);
 integer i, j;
 begin
     for (i = 0; i < 5; i = i + 1) begin
         for (j = 0; j < 5; j = j + 1) begin
-            IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + 1 + j)];
-            $display("x/y %2d/%2d IMGIN: %h, MNIST: %h", X, Y, IMGIN[(i * 5 + j) * 8 +: 8], MNIST_image[img_idx][(X + i) * 28 + (Y + 1 + j)]);
+            if (first)
+                IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
+            else
+                IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + 1 + j)];
+            //$display("x/y %2d/%2d IMGIN: %h, MNIST: %h", X, Y, IMGIN[(i * 5 + j) * 8 +: 8], MNIST_image[img_idx][(X + i) * 28 + (Y + j)]);
         end
     end
 end
@@ -122,7 +131,7 @@ begin
     begin
         if (label[label_idx] != OUT)
             err = err + 1;
-        //$display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
+        $display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
         label_idx = label_idx + 1;
     end
 end
@@ -131,7 +140,7 @@ end
 // accuracy 계산 
 always@(label_idx)
 begin
-    if (label_idx == 1) begin
+    if (label_idx == 100) begin
         $display("Accuracy: %.2f%%\n", (100.0 - err) / 100.0 * 100.0); 
         $finish;
     end    

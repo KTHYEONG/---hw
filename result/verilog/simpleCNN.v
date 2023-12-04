@@ -36,7 +36,6 @@ module simpleCNN (
     reg signed [31:0] fc_res[9:0];
     integer fc_idx;
 
-    // x,y 0 일 때 데이터 저장 안되고 , y 1 부터 저장되는 오류 수정하기
     always @(posedge CLK or negedge nRST)
     begin
         if (!nRST) begin
@@ -51,6 +50,13 @@ module simpleCNN (
                     DONE <= 0;
                     if (START) begin
                         state <= CONVOLUTION;
+                        
+                        // 첫번째 줄 데이터 저장(X = 0, Y = 0)
+                        for (integer i = 0; i < 5; i = i + 1) begin
+                            for (integer j = 0; j < 5; j = j + 1) begin
+                                conv_temp[i][j] <= IMGIN[(i * 5 + j) * 8 +: 8];
+                            end
+                        end
                     end
                 end
                 
@@ -58,7 +64,7 @@ module simpleCNN (
                     for (integer i = 0; i < 5; i = i + 1) begin
                         for (integer j = 0; j < 5; j = j + 1) begin
                             conv_temp[i][j] <= IMGIN[(i * 5 + j) * 8 +: 8];
-                            //$display("X/Y: %2d/%2d i/j: %0d/%0d IMGIN: %d", X, Y, i, j, IMGIN[(i * 5 + j) * 8 +: 8]);
+                            //$display("X/Y: %2d/%2d i/j: %0d/%0d IMGIN/conv_temp %d/%d", X, Y, i, j, IMGIN[(i * 5 + j) * 8 +: 8], conv_temp[i][j]);
                         end
                     end
                     
@@ -94,7 +100,7 @@ begin
     for (i = 0; i < 5; i = i + 1) begin
         for (j = 0; j < 5; j = j + 1) begin
             sum = sum + conv_kernel(i, j) * conv_temp[i][j];
-            //$display("X/Y %d/%d i/j: %d/%d  conv_temp: %h", X, Y, i, j, conv_temp[i][j]);
+            //$display("X/Y %d/%d i/j: %d/%d  mul:%d, conv_temp: %h", X, Y, i, j, conv_kernel(i, j) * conv_temp[i][j], conv_temp[i][j]);
         end
     end
     
