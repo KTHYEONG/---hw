@@ -24,13 +24,14 @@ module simpleCNN (
 
     `include "kernel.vh"
 
+    // STATE
     reg [1:0] state;
     parameter IDLE = 2'b00, CONVOLUTION = 2'b01,
             FULLY_CONNECTED = 2'b10;
 
     // CONVOLUTION && RELU
     reg signed [31:0] conv_res[23:0][23:0];
-    reg [7:0] conv_temp[4:0][4:0];
+    reg signed [31:0] conv_temp[4:0][4:0];
 
     // FC
     reg signed [31:0] fc_res[9:0];
@@ -64,7 +65,6 @@ module simpleCNN (
                     for (integer i = 0; i < 5; i = i + 1) begin
                         for (integer j = 0; j < 5; j = j + 1) begin
                             conv_temp[i][j] <= IMGIN[(i * 5 + j) * 8 +: 8];
-                            //$display("X/Y: %2d/%2d i/j: %0d/%0d IMGIN/conv_temp %d/%d", X, Y, i, j, IMGIN[(i * 5 + j) * 8 +: 8], conv_temp[i][j]);
                         end
                     end
                     
@@ -100,7 +100,6 @@ begin
     for (i = 0; i < 5; i = i + 1) begin
         for (j = 0; j < 5; j = j + 1) begin
             sum = sum + conv_kernel(i, j) * conv_temp[i][j];
-            //$display("X/Y %d/%d i/j: %d/%d  mul:%d, conv_temp: %h", X, Y, i, j, conv_kernel(i, j) * conv_temp[i][j], conv_temp[i][j]);
         end
     end
     
@@ -130,7 +129,6 @@ integer i, idx;
 begin
     idx = 0;
     for (i = 1; i < 10; i = i + 1) begin
-        //$display("i/idx: %d/%d  %d/%d", i, idx, fc_res[i], fc_res[idx]);
         if (fc_res[i] > fc_res[idx])
             idx = i;
     end

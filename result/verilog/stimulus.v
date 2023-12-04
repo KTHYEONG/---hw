@@ -11,6 +11,7 @@ wire[3:0] OUT;
 
 simpleCNN sCNN(.CLK(CLK), .nRST(nRST), .START(START), .X(X), .Y(Y), .IMGIN(IMGIN), .DONE(DONE), .OUT(OUT));
 
+// 클럭 변화
 always
     #5 CLK = ~CLK;
 
@@ -22,7 +23,7 @@ begin
     repeat(99) #5900 START = ~START;
 end
 
-// IMGIN, x = 0, y = 0 --> 각 이미지마다 1번째 줄 데이터 읽어들이지 못하는 중
+// START 신호가 1이되면 IMGIN에 데이터 저장시작
 reg check, first;
 always@(posedge CLK or negedge nRST)
 begin
@@ -31,7 +32,6 @@ begin
         Y <= 0;
         first <= 1;
         check <= 0;
-        IMGIN <= 0;
     end
     else if (START) begin
         imgst(first);
@@ -56,12 +56,15 @@ begin
             else begin
                 X <= 0;
                 check <= 0;
+                first <= 1;
                 img_idx <= img_idx + 1;
             end
         end
     end
 end
 
+// IMGIN에 데이터 저장
+// first -> 각 이미지마다 처음에 저장되는 부분에 에러가 있어 따로 처리
 task imgst(input reg first);
 integer i, j;
 begin
@@ -71,13 +74,12 @@ begin
                 IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + j)];
             else
                 IMGIN[(i * 5 + j) * 8 +: 8] = MNIST_image[img_idx][(X + i) * 28 + (Y + 1 + j)];
-            //$display("x/y %2d/%2d IMGIN: %h, MNIST: %h", X, Y, IMGIN[(i * 5 + j) * 8 +: 8], MNIST_image[img_idx][(X + i) * 28 + (Y + j)]);
         end
     end
 end
 endtask
 
-// image 입력
+// MNIST 데이터를 저장
 reg [7:0] MNIST_image[99:0][783:0];
 reg [7:0] pixel;
 integer fd, i;
@@ -131,13 +133,12 @@ begin
     begin
         if (label[label_idx] != OUT)
             err = err + 1;
-        $display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
+        //$display("%d OUT/ANS: %d/%d", label_idx, OUT, label[label_idx]);
         label_idx = label_idx + 1;
     end
 end
 
-
-// accuracy 계산 
+// Accuracy 계산 
 always@(label_idx)
 begin
     if (label_idx == 100) begin
